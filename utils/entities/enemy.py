@@ -4,11 +4,13 @@ from utils.sprite import Sprites
 
 
 class EnemyAction(Enum):
-    IDLE = 'idle'
-    WALK = 'walk'
-    RUN = 'run'
     ATTACK = 'attack'
+    DEATH = 'death'
+    GET_UP = 'get_up'
+    IDLE = 'idle'
     KNOCK_BACK = 'knock_back'
+    RUN = 'run'
+    WALK = 'walk'
 
 
 class Enemy(Entity):
@@ -26,7 +28,6 @@ class Enemy(Entity):
 
     def update(self):
         match self.current_action:
-            # TODO: figure out enemy walk, run speed
             case EnemyAction.WALK:
                 self.a = 0
                 self.v = 2
@@ -36,6 +37,7 @@ class Enemy(Entity):
             case EnemyAction.KNOCK_BACK:
                 # TODO: Enemy Knock back
                 pass
+            # TODO: Handle other actions
             case _:
                 self.a = 0
                 self.v = 0
