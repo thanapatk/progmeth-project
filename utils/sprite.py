@@ -1,3 +1,4 @@
+import json
 import os
 from enum import Enum
 import copy
@@ -89,28 +90,25 @@ class Sprites(Sprite):
 
 class SpriteLoader:
     @staticmethod
-    def load_sprites(path: str, sprite_size: tuple[int, int] | None = None, scale: int = 1, repeat: bool = False, repeat_count: int = 1, repeat_type: RepeatType = RepeatType.CYCLE) -> dict[str, Sprites]:
+    def load_sprites(path: str, scale: int = 1, repeat: bool = False, repeat_count: int = 1, repeat_type: RepeatType = RepeatType.CYCLE) -> dict[str, Sprites]:
         sprite_paths = os.listdir(path)
 
         output = dict()
+        with open(os.path.join(path, 'config.json'), 'r') as f:
+            config = json.load(f)
 
-        for sprite_path in sprite_paths:
+        for sprite_path in filter(lambda e: e.endswith('.png'), sprite_paths):
             img = load(f'{path}/{sprite_path}').convert_alpha()
-
-            if sprite_size is None:
-                _sprite_size = img.get_size()
-            else:
-                _sprite_size = sprite_size
-
-            sprite_count = img.get_size()[0] // _sprite_size[0]
             sprite_name = sprite_path.split('.')[0]
 
-            if sprite_count <= 1:
-                _sprite_size = img.get_size()
-                sprite_count = 1
+            if len(config[sprite_name]) == 3:
+                sprite_size, sprite_count, _repeat = config[sprite_name]
+            else:
+                sprite_size, sprite_count = config[sprite_name]
+                _repeat = 1
 
-            output[sprite_name] = Sprites(sprite_name=sprite_name, images=img, sprite_size=_sprite_size, sprite_count=sprite_count,
-                                          scale=scale, repeat=repeat, repeat_count=repeat_count, repeat_type=repeat_type)
+            output[sprite_name] = Sprites(sprite_name=sprite_name, images=img, sprite_size=sprite_size, sprite_count=sprite_count,
+                                          scale=scale, repeat=repeat, repeat_count=repeat_count * _repeat, repeat_type=repeat_type)
 
         return output
 
