@@ -15,40 +15,32 @@ class EnemyAction(Enum):
 
 
 class Enemy(Entity):
+    __LOOP_ACTION = (EnemyAction.WALK, EnemyAction.RUN)
+
     def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing) -> None:
         self.current_action = EnemyAction.WALK
 
         super().__init__(sprites, loc, facing)
 
     def update(self) -> None:
-        match self.current_action:
-            case EnemyAction.WALK:
-                self.a = 0
-                self.v = 2
-            case EnemyAction.RUN:
-                self.a = 0
-                self.v = 6
-            case EnemyAction.KNOCK_BACK:
-                # TODO: Enemy Knock back
-                pass
-            # TODO: Handle other actions
-            case _:
-                self.a = 0
-                self.v = 0
+        self.a, self.v = self._ENTITY_MOVEMENT.get(
+            self.current_action.value, self._ENTITY_MOVEMENT['idle'])
 
-                frame_time = self.get_sprite().sprites_count
+        if self.current_action not in self.__LOOP_ACTION:
+            frame_time = self.get_sprite().sprites_count
 
-                if self._counter == frame_time:
-                    self.current_action = EnemyAction.WALK
-                    self._counter = 0
-                else:
-                    self._counter += 1
+            if self._counter == frame_time:
+                self.current_action = EnemyAction.WALK
+                self._counter = 0
+            else:
+                self._counter += 1
 
         current_sprite = self.get_sprite()
         current_sprite.flipped = self.facing == Facing.RIGHT
 
         if self.prev_sprite != current_sprite:
             current_sprite.rect.x, current_sprite.rect.y = self.loc
+            # hide sprite off scene
             self.prev_sprite.rect.x, self.prev_sprite.rect.y = (-100, -100)
             self.prev_sprite = current_sprite
 

@@ -10,6 +10,12 @@ class Facing(Enum):
 
 
 class Entity:
+    _ENTITY_MOVEMENT: dict[str, tuple[int, int]] = {
+        'idle': (0, 0),
+        'walk': (0, 2),
+        'run': (0, 6)
+    }
+
     def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing) -> None:
         self.sprites = sprites
         self.facing = facing
