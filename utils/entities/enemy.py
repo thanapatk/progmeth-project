@@ -1,5 +1,6 @@
 from enum import Enum
 
+from utils.camera.camera import Camera
 from utils.entities.entity import Entity, Facing
 from utils.sprite import Sprites
 
@@ -22,7 +23,9 @@ class Enemy(Entity):
 
         super().__init__(sprites, loc, facing)
 
-    def update(self) -> None:
+    def update(self, camera: Camera) -> None:
+        super().update(camera)
+
         self.a, self.v = self._ENTITY_MOVEMENT.get(
             self.current_action.value, self._ENTITY_MOVEMENT['idle'])
 
@@ -36,7 +39,7 @@ class Enemy(Entity):
                 self._counter += 1
 
         current_sprite = self.get_sprite()
-        current_sprite.flipped = self.facing == Facing.RIGHT
+        current_sprite.flipped = self.facing == Facing.LEFT
 
         if self.prev_sprite != current_sprite:
             current_sprite.rect.x, current_sprite.rect.y = self.loc
@@ -45,6 +48,7 @@ class Enemy(Entity):
             self.prev_sprite = current_sprite
 
         current_sprite.rect.move_ip(self.v * self.facing.value, 0)
+        # super().update(camera)
         self.loc = (current_sprite.rect.x, current_sprite.rect.y)
 
     def get_sprite(self) -> Sprites:

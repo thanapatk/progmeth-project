@@ -1,5 +1,6 @@
 from enum import Enum
 
+from utils.camera.camera import Camera
 from utils.entities.entity import Entity, Facing
 from utils.sprite import Sprites
 from collections import deque
@@ -47,8 +48,7 @@ class Player(Entity):
 
         actions = self.inv_key_binding.get(
             pressed_key, self.current_action.name).split('_')
-
-        if actions[0] == 'run':
+        if len(actions) != 2:
             return
 
         action, direction = actions
@@ -57,11 +57,13 @@ class Player(Entity):
         self.current_action = PlayerAction(action)
         self.facing = facing
 
-    def update(self) -> None:
+    def update(self, camera: Camera) -> None:
+        super().update(camera)
+
         self.a, self.v = self._ENTITY_MOVEMENT.get(
             self.current_action.value, self._ENTITY_MOVEMENT['idle'])
 
-        if self.__is_running_changed:
+        if self.__is_running_changed and self._counter == 0:
             if self.is_running:
                 self.current_action = PlayerAction.RUN
                 self.facing = Facing.RIGHT
@@ -85,6 +87,7 @@ class Player(Entity):
                 self._counter += 1
 
         current_sprite = self.get_sprite()
+        current_sprite.rect.move_ip(self.v, 0)
         current_sprite.flipped = self.facing == Facing.LEFT
 
         if self.prev_sprite != current_sprite:
@@ -98,7 +101,8 @@ class Player(Entity):
             self.prev_sprite.rect.center = (-100, -100)
             self.prev_sprite = current_sprite
 
-        # current_sprite.rect.move_ip(self.v * self.facing.value, 0)
+        # current_sprite.rect.move_ip(self.v, 0)
+        # super().update(camera)
         self.loc = current_sprite.rect.topleft
 
     def get_sprite(self) -> Sprites:

@@ -1,12 +1,13 @@
 from abc import abstractmethod
 from enum import Enum
 
+from utils.camera.camera import Camera
 from utils.sprite import Sprites
 
 
 class Facing(Enum):
-    LEFT = 1
-    RIGHT = -1
+    LEFT = -1
+    RIGHT = 1
 
 
 class Entity:
@@ -27,9 +28,14 @@ class Entity:
 
         self._counter = 0
 
-    @abstractmethod
-    def update(self) -> None:
-        pass
+        self.a, self.v = 0, 0
+
+    @property
+    def rect(self):
+        return self.get_sprite().rect
+
+    def update(self, camera: Camera) -> None:
+        self.rect.move_ip(-camera.offset.x, -camera.offset.y)
 
     @abstractmethod
     def get_sprite(self) -> Sprites:
