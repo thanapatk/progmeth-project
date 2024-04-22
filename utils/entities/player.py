@@ -1,7 +1,9 @@
 from enum import Enum
+import random
 from typing import Literal
 
 from pygame import Rect
+from pygame.mixer import Sound
 
 from utils.camera.camera import Camera
 from utils.entities.enemy import Enemy
@@ -35,7 +37,7 @@ class Player(Entity):
         'death': (2, -10)
     }
 
-    def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing, key_binding: dict[str, int]) -> None:
+    def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing, key_binding: dict[str, int], sfx: dict[str, Sound]) -> None:
         self.current_action = PlayerAction.IDLE
         self.__action_queue = deque()
 
@@ -47,6 +49,13 @@ class Player(Entity):
         self.__is_running = True
 
         self.health = 3
+
+        self.sfx = sfx
+        self.sfx_mapping = {
+            PlayerAction.PUNCH: (self.sfx['punch_1'], self.sfx['punch_2']),
+            PlayerAction.KICK: (self.sfx['kick_1'], self.sfx['kick_2']),
+            PlayerAction.DUCK: (self.sfx['duck_1'], self.sfx['duck_2']),
+        }
 
     @property
     def is_running(self):
@@ -62,6 +71,7 @@ class Player(Entity):
         self.__action_queue.append(action)
 
     def __take_damage(self):
+        self.sfx['take_damage'].play()
         self.health -= 1
 
         self.current_action = PlayerAction.KNOCK_BACK
@@ -117,6 +127,9 @@ class Player(Entity):
 
         if self.current_action not in self.__LOOP_ACTION:
             frame_time = self.get_sprite().sprites_count
+
+            if self._counter == 0 and self.current_action in self.sfx_mapping.keys():
+                random.choice(self.sfx_mapping[self.current_action]).play()
 
             if self._counter == frame_time:
                 if len(self.__action_queue) != 0:
