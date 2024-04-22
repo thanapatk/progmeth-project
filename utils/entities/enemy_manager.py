@@ -1,6 +1,9 @@
+import math
 import random
 from typing import Literal
 from pygame import Rect
+import pygame
+from pygame.time import Clock
 from pygame.sprite import Group
 from utils.camera.camera import Camera
 from utils.entities.enemy import Enemy, EnemyAction
@@ -11,10 +14,39 @@ from utils.sprite import SpriteLoader, Sprites
 
 
 class EnemyManager:
-    def __init__(self, enemy_sprites: dict[str, dict[str, Sprites]]) -> None:
+    def __init__(self, player: Player, window_width: int, enemy_sprites: dict[str, dict[str, Sprites]], clock: Clock) -> None:
         self.enemies: DLList[Enemy] = DLList()
         self.enemy_sprites = enemy_sprites
         self.enemy_types = list(self.enemy_sprites.keys())
+        self.player = player
+        self.window_width = window_width
+
+        self.clock = clock
+        self.started_level = False
+
+        self.last_enemy_spawn_time = self.__started_time
+        self.prob, self.cool_down = self.get_spawn_rates()
+
+    @property
+    def started_level(self):
+        return self.__started_level
+
+    def get_spawn_rates(self):
+        t = self.elapsed_time
+
+        prob = min(1, 55 * math.log(t / 5 + 1))
+        cool_down = max(2, -.06 * t + 4.08)
+
+        return prob, cool_down
+
+    @started_level.setter
+    def started_level(self, value: bool):
+        self.__started_level = value
+        self.__started_time = self.clock.get_time()
+
+    @property
+    def elapsed_time(self):
+        return (pygame.time.get_ticks() - self.__started_time) / 1000
 
     def add_enemy(self, enemy: Enemy, sprite_group: Group):
         self.enemies.append(enemy)
@@ -22,22 +54,61 @@ class EnemyManager:
         for sprite in enemy.get_all_sprites():
             sprite_group.add(sprite)
 
-    def spawn_enemy(self, loc: tuple[int, int], facing: Facing, sprite_group: Group):
-        enemy_type = random.choice(self.enemy_types)
+    def spawn_enemy(self, window_width: int, y: int, sprite_group: Group):
+        t = self.elapsed_time
+        if t - self.last_enemy_spawn_time < self.cool_down:
+            return
 
-        self.add_enemy(
-            Enemy(enemy_type, SpriteLoader.copy_sprites(self.enemy_sprites[enemy_type]), loc, facing), sprite_group)
+        self.prob, self.cool_down = self.get_spawn_rates()
+        if random.random() > self.prob:
+            return
+
+        self.last_enemy_spawn_time = t
+
+        enemy_type = random.choice(self.enemy_types)
+        if self.prob < 0.7:
+            facing = (Facing.LEFT, Facing.RIGHT)[random.random() < self.prob]
+        else:
+            facing = random.choice((Facing.LEFT, Facing.RIGHT))
+
+        loc_x = random.randint(-600, -100)
+
+        if facing == Facing.LEFT:
+            loc_x = window_width + loc_x * -1
+
+        enemy = Enemy(enemy_type, SpriteLoader.copy_sprites(
+            self.enemy_sprites[enemy_type]), (loc_x, y), facing)
+
+        enemies = list(self.enemies)
+        self.add_enemy(enemy, sprite_group)
+
+        while enemy.rect.collidelist([e.rect for e in enemies]) != -1:
+            enemy.rect.move_ip(enemy.rect.width * facing.value, 0)
 
     def update(self, camera: Camera):
         for enemy_node in self.enemies.iter_node():
             if enemy_node.data.is_dead:
                 self.enemies.delete(node=enemy_node)
             else:
+                tmp_action = enemy_node.data.current_action
+                distance = abs(self.player.loc[0] - enemy_node.data.loc[0])
+                # print(distance)
+                if distance > self.window_width:
+                    print("out run!")
+                    self.enemies.delete(node=enemy_node)
+                # elif distance > self.window_width // 4:
+                #     enemy_node.data.current_action = EnemyAction.RUN
+                else:
+                    enemy_node.data.current_action = tmp_action if tmp_action != EnemyAction.RUN else EnemyAction.WALK
+
                 enemy_node.data.update(camera)
 
     def __check_enemy_collisions(self, enemy: Enemy, enemies_dict: dict):
         for _rect, enemy_node in enemy.rect.collidedictall(enemies_dict):
             enemy_node.data.knock_back()
+
+            while enemy_node.data.rect.collidelist([e.rect for e in self.enemies if e != enemy_node.data and e.current_action not in (EnemyAction.DEATH, EnemyAction.KNOCK_BACK)]) != -1:
+                enemy_node.data.rect.move_ip(-1 * enemy.facing.value, 0)
 
     def check_enemy_collisions(self, enemies_dict: dict | None = None):
         if enemies_dict is None:
@@ -57,7 +128,6 @@ class EnemyManager:
         for _rect, enemy_node in output:
             if player.current_action == PlayerAction.KNOCK_BACK:
                 enemy_node.data.knock_back()
-                self.__check_enemy_collisions(enemy_node.data, enemies_dict)
             else:
                 enemy_node.data.attack()
                 player.handle_attack(enemy_node.data)
