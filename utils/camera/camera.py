@@ -19,7 +19,7 @@ class Camera:
     def CONST(self):
         return Vector2(
             (self.entity.rect.w -
-             self.DISPLAY_SIZE.x) // 2, (self.entity.rect.h - self.DISPLAY_SIZE.y) // 2)
+             self.DISPLAY_SIZE.x) // 2, (self.entity.rect.h - self.DISPLAY_SIZE.y) // 2 + 180)
 
     @property
     def scroll_method(self):
