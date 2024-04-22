@@ -1,6 +1,10 @@
 from enum import Enum
+from typing import Literal
+
+from pygame import Rect
 
 from utils.camera.camera import Camera
+from utils.entities.enemy import Enemy
 from utils.entities.entity import Entity, Facing
 from utils.sprite import Sprites
 from collections import deque
@@ -21,6 +25,15 @@ class PlayerAction(Enum):
 
 class Player(Entity):
     __LOOP_ACTION = (PlayerAction.WALK, PlayerAction.RUN)
+    __ATTACK_ACTION = (PlayerAction.PUNCH,
+                       PlayerAction.KICK, PlayerAction.DUCK)
+    _ENTITY_MOVEMENT: dict[str, tuple[int, int]] = {
+        'idle': (0, 0),
+        'walk': (0, 2),
+        'run': (0, 6),
+        'knock_back': (0, -5),
+        'death': (2, -10)
+    }
 
     def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing, key_binding: dict[str, int]) -> None:
         self.current_action = PlayerAction.IDLE
@@ -33,6 +46,8 @@ class Player(Entity):
 
         self.__is_running = True
 
+        self.health = 3
+
     @property
     def is_running(self):
         return self.__is_running
@@ -41,6 +56,32 @@ class Player(Entity):
     def is_running(self, value: bool):
         self.__is_running_changed = self.__is_running != value
         self.__is_running = value
+
+    def __knock_back(self, action: PlayerAction = PlayerAction.GET_UP):
+        self.current_action = PlayerAction.KNOCK_BACK
+        self.__action_queue.append(action)
+
+    def __take_damage(self):
+        self.health -= 1
+
+        self.current_action = PlayerAction.KNOCK_BACK
+        self.__action_queue.append(
+            PlayerAction.GET_UP if self.health != 0 else PlayerAction.DEATH)
+
+    def handle_attack(self, enemy: Enemy):
+        self.facing = Facing.LEFT if enemy.facing == Facing.RIGHT else Facing.RIGHT
+
+        if self.current_action not in self.__ATTACK_ACTION:
+            self.__take_damage()
+
+        # win
+        elif self._WIN_CONDITION[self.current_action.value] == enemy.enemy_type:
+            enemy.take_damage()
+
+        # draw
+        elif self.current_action.value == enemy.enemy_type:
+            enemy.knock_back()
+            self.__knock_back()
 
     def handle_action(self, pressed_key: int):
         if self._counter != 0:  # during animation
@@ -60,6 +101,9 @@ class Player(Entity):
     def update(self, camera: Camera) -> None:
         super().update(camera)
 
+        if self.current_action == PlayerAction.DEATH:
+            return
+
         self.a, self.v = self._ENTITY_MOVEMENT.get(
             self.current_action.value, self._ENTITY_MOVEMENT['idle'])
 
@@ -75,8 +119,9 @@ class Player(Entity):
             frame_time = self.get_sprite().sprites_count
 
             if self._counter == frame_time:
-                # TODO: Update value from self.action_queue
-                if self.is_running:
+                if len(self.__action_queue) != 0:
+                    self.current_action = self.__action_queue.popleft()
+                elif self.is_running:
                     self.current_action = PlayerAction.RUN
                     self.facing = Facing.RIGHT
                 else:
@@ -87,7 +132,10 @@ class Player(Entity):
                 self._counter += 1
 
         current_sprite = self.get_sprite()
-        current_sprite.rect.move_ip(self.v, 0)
+        if self.current_action == PlayerAction.KNOCK_BACK and self.facing == Facing.LEFT:
+            current_sprite.rect.move_ip(-self.v, 0)
+        else:
+            current_sprite.rect.move_ip(self.v, 0)
         current_sprite.flipped = self.facing == Facing.LEFT
 
         if self.prev_sprite != current_sprite:

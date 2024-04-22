@@ -11,10 +11,10 @@ class Facing(Enum):
 
 
 class Entity:
-    _ENTITY_MOVEMENT: dict[str, tuple[int, int]] = {
-        'idle': (0, 0),
-        'walk': (0, 2),
-        'run': (0, 6)
+    _WIN_CONDITION = {
+        'punch': 'kick',
+        'kick': 'duck',
+        'duck': 'punch'
     }
 
     def __init__(self, sprites: dict[str, Sprites], loc: tuple[int, int], facing: Facing) -> None:
@@ -43,3 +43,7 @@ class Entity:
 
     def get_all_sprites(self):
         return self.sprites.values()
+
+    def __del__(self):
+        for sprite in self.get_all_sprites():
+            sprite.kill()
