@@ -21,8 +21,8 @@ class Enemy(Entity):
     __LOOP_ACTION = (EnemyAction.WALK, EnemyAction.RUN)
     _ENTITY_MOVEMENT: dict[str, tuple[int, int]] = {
         'idle': (0, 0),
-        'walk': (0, 3),
-        'run': (0, 7),
+        'walk': (0, 4),
+        'run': (0, 5),
         'knock_back': (0, -10),
         'death': (2, -10)
     }
@@ -41,6 +41,9 @@ class Enemy(Entity):
 
     def knock_back(self, length: int = 1, action: EnemyAction = EnemyAction.GET_UP):
         self.current_action = EnemyAction.KNOCK_BACK
+        if length > 1:
+            self.__action_queue.extendleft(
+                [EnemyAction.KNOCK_BACK] * (length - 1))
         self.__action_queue.append(action)
 
     def take_damage(self):
