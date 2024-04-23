@@ -17,6 +17,7 @@ from utils.entities.enemy_manager import EnemyManager
 from utils.entities.entity import Facing
 from utils.entities.player import Player
 from utils.sprite import RepeatType, SpriteLoader
+from utils.screen.ui_manager import UI
 
 # 2 - Define constants
 GRAY = (200, 200, 200)
@@ -87,7 +88,8 @@ background = Background(window)
 
 # enemy_manager.started = True
 
-menu = Menu(window)
+ui = UI(window, player, "sprites/ui/heart.png")
+menu = Menu(window, HIGH_SCORE)
 settings = Settings(window, KEY_BINDING)
 tutorial = Tutorial(window)
 stage = Stage(window)
@@ -166,11 +168,13 @@ while running:
             else:
                 tutorial.handle_event(event)
         if not tutorial.show:
+            tutorial.show = True
             PAGE = "menu"
 
     elif PAGE == "start":
         if not player.started:
             player.started = True
+            player.score = 0
         elif not enemy_manager.started:
             pygame.mixer.music.unload()
             pygame.mixer.music.load(BGM['playing'])
@@ -201,6 +205,7 @@ while running:
 
         # 9 - Clear the window
         background.draw()
+        ui.draw()
 
         # 10 - Draw all window elements
         # enemy_1.get_sprite()
@@ -215,6 +220,9 @@ while running:
             pygame.mixer.music.load(BGM['menu'])
             pygame.mixer.music.set_volume(VOLUME)
             pygame.mixer.music.play()
+
+            HIGH_SCORE = max(HIGH_SCORE, player.score)
+            menu.update_highscore(HIGH_SCORE)
 
             PAGE = 'menu'
 

@@ -75,6 +75,13 @@ class Menu:
     def update_highscore(self, new_score):
         self.highscore = new_score
 
+        self.oTextscore = pygwidgets.DisplayText(self.window, (550, 330), str(self.highscore), "font/8-bit Arcade In.ttf", 90, justified="center",
+                                                 textColor=LIGHT_ORANGE)
+        self.oBGscore = pygwidgets.DisplayText(self.window, (550, 330), str(self.highscore), "font/8-bit Arcade In.ttf", 90, justified="center",
+                                               textColor=BLACK)
+
+        adjust(self.oTextscore, -120)
+        adjust(self.oBGscore, -116, 4)
     # def update_background(self, bg_path):
     #     self.background = pygame.image.load(bg_path).convert_alpha()
 

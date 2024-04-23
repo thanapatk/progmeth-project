@@ -65,7 +65,8 @@ class Settings:
 
         for i, action in enumerate(self.key_binding.keys()):
             key = self.key_binding.get(action)
-            rect = pygame.Rect(positions[i][0] - 100, positions[i][1], 200, 50)
+            rect = pygame.Rect(
+                positions[len(self.key_binding) - i - 1][0] - 100, positions[i][1], 200, 50)
             self.key_buttons[action] = rect
             self.key_mappings[action] = key
 

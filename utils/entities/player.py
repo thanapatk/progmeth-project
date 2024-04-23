@@ -6,7 +6,7 @@ from pygame import Rect
 from pygame.mixer import Sound
 
 from utils.camera.camera import Camera
-from utils.entities.enemy import Enemy
+from utils.entities.enemy import Enemy, EnemyAction
 from utils.entities.entity import Entity, Facing
 from utils.sprite import Sprites
 from collections import deque
@@ -49,6 +49,7 @@ class Player(Entity):
         self.__is_running = True
         self.started = False
 
+        self.score = 0
         self.health = 3
 
         self.sfx = sfx
@@ -79,6 +80,7 @@ class Player(Entity):
     def started(self, value: bool):
         self.__started = value
         if not self.__started:
+            self.score = 0
             self.health = 3
             self.current_action = PlayerAction.IDLE
             self.__action_queue.clear()
@@ -109,10 +111,12 @@ class Player(Entity):
 
         if self.current_action not in self.__ATTACK_ACTION:
             self.__take_damage()
+            enemy.attack()
 
         # win
         elif self._WIN_CONDITION[self.current_action.value] == enemy.enemy_type:
             enemy.take_damage()
+            self.score += 50
 
         # draw
         elif self.current_action.value == enemy.enemy_type:

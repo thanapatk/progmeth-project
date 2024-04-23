@@ -37,6 +37,7 @@ class Enemy(Entity):
 
     def attack(self):
         self.current_action = EnemyAction.ATTACK
+        self.__action_queue.extend([EnemyAction.IDLE] * 3)
 
     def knock_back(self, length: int = 1, action: EnemyAction = EnemyAction.GET_UP):
         self.current_action = EnemyAction.KNOCK_BACK

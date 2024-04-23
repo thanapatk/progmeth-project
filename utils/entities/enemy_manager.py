@@ -102,7 +102,7 @@ class EnemyManager:
                 distance = abs(self.player.loc[0] - enemy_node.data.loc[0])
                 # print(distance)
                 if distance > self.window_width:
-                    print("out run!")
+                    self.player.score += 25
                     self.enemies.delete(node=enemy_node)
                 # elif distance > self.window_width // 4:
                 #     enemy_node.data.current_action = EnemyAction.RUN
@@ -113,15 +113,18 @@ class EnemyManager:
 
     def __check_enemy_collisions(self, enemy: Enemy, enemies_dict: dict):
         for _rect, enemy_node in enemy.rect.collidedictall(enemies_dict):
+            if enemy_node.data == enemy:
+                continue
+
             enemy_node.data.knock_back()
 
-            while enemy_node.data.rect.collidelist([e.rect for e in self.enemies if e != enemy_node.data and e.current_action not in (EnemyAction.DEATH, EnemyAction.KNOCK_BACK)]) != -1:
+            while enemy_node.data.rect.collidelist([e.rect for e in self.enemies if e != enemy_node.data and e.current_action not in (EnemyAction.DEATH, EnemyAction.KNOCK_BACK, EnemyAction.ATTACK)]) != -1:
                 enemy_node.data.rect.move_ip(-1 * enemy.facing.value, 0)
 
     def check_enemy_collisions(self, enemies_dict: dict | None = None):
         if enemies_dict is None:
             enemies_dict = {tuple(
-                enemy_node.data.rect): enemy_node for enemy_node in self.enemies.iter_node() if enemy_node.data.current_action != EnemyAction.DEATH and enemy_node.data.current_action != EnemyAction.KNOCK_BACK}
+                enemy_node.data.rect): enemy_node for enemy_node in self.enemies.iter_node() if enemy_node.data.current_action not in (EnemyAction.DEATH, EnemyAction.KNOCK_BACK, EnemyAction.ATTACK)}
 
         for enemy in self.enemies:
             if enemy.current_action == EnemyAction.KNOCK_BACK:
@@ -129,7 +132,7 @@ class EnemyManager:
 
     def check_collisions(self, player: Player):
         enemies_dict = {tuple(
-            enemy_node.data.rect): enemy_node for enemy_node in self.enemies.iter_node() if enemy_node.data.current_action != EnemyAction.DEATH}
+            enemy_node.data.rect): enemy_node for enemy_node in self.enemies.iter_node() if enemy_node.data.current_action not in (EnemyAction.DEATH, EnemyAction.ATTACK)}
 
         output = player.rect.collidedictall(enemies_dict)  # type: ignore
 
