@@ -11,5 +11,9 @@ KEYBINDING = {
     'duck_l': pygame.K_s
 }
 
+VOLUME = 0.5
+
+HIGH_SCORE = 0
+
 with open('config.pkl', 'wb') as f:
-    pickle.dump(KEYBINDING, f)
+    pickle.dump((KEYBINDING, VOLUME, HIGH_SCORE), f)
