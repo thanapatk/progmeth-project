@@ -39,8 +39,9 @@ class Sprites(Sprite):
 
         self.flipped = flipped
 
-    def update(self):
-        self.counter = (self.counter + 1) % self.sprites_count
+    def update(self, play_animation: bool = True):
+        if play_animation:
+            self.counter = (self.counter + 1) % self.sprites_count
 
         if self.flipped:
             self.image = transform.flip(

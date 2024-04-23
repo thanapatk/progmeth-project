@@ -22,13 +22,20 @@ class EnemyManager:
         self.window_width = window_width
 
         self.clock = clock
-        self.started_level = False
+        self.started = False
+        self.__started_time = 0
 
         self.last_enemy_spawn_time = self.__started_time
         self.prob, self.cool_down = self.get_spawn_rates()
 
+    def clear(self):
+        for enemy in self.enemies.iter_node():
+            self.enemies.delete(node=enemy)
+
+        print(self.enemies)
+
     @property
-    def started_level(self):
+    def started(self):
         return self.__started_level
 
     def get_spawn_rates(self):
@@ -39,10 +46,11 @@ class EnemyManager:
 
         return prob, cool_down
 
-    @started_level.setter
-    def started_level(self, value: bool):
+    @started.setter
+    def started(self, value: bool):
         self.__started_level = value
-        self.__started_time = self.clock.get_time()
+        if self.__started_level:
+            self.__started_time = self.clock.get_time()
 
     @property
     def elapsed_time(self):

@@ -1,6 +1,5 @@
 from collections import deque
 from enum import Enum
-from typing import Literal
 
 from utils.camera.camera import Camera
 from utils.entities.entity import Entity, Facing

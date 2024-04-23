@@ -47,6 +47,7 @@ class Player(Entity):
         self.inv_key_binding = {v: k for k, v in self.key_binding.items()}
 
         self.__is_running = True
+        self.started = False
 
         self.health = 3
 
@@ -56,6 +57,31 @@ class Player(Entity):
             PlayerAction.KICK: (self.sfx['kick_1'], self.sfx['kick_2']),
             PlayerAction.DUCK: (self.sfx['duck_1'], self.sfx['duck_2']),
         }
+
+    @property
+    def key_binding(self):
+        return self.__key_binding
+
+    @key_binding.setter
+    def key_binding(self, key_binding):
+        self.__key_binding = key_binding
+        self.inv_key_binding = {v: k for k, v in self.key_binding.items()}
+
+    @property
+    def is_dead(self):
+        return self.current_action == PlayerAction.DEATH
+
+    @property
+    def started(self):
+        return self.__started
+
+    @started.setter
+    def started(self, value: bool):
+        self.__started = value
+        if not self.__started:
+            self.health = 3
+            self.current_action = PlayerAction.IDLE
+            self.__action_queue.clear()
 
     @property
     def is_running(self):
@@ -110,6 +136,10 @@ class Player(Entity):
 
     def update(self, camera: Camera) -> None:
         super().update(camera)
+
+        if not self.started:
+            self.current_action = PlayerAction.IDLE
+            return
 
         if self.current_action == PlayerAction.DEATH:
             return
